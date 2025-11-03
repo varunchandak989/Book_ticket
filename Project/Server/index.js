@@ -1,14 +1,23 @@
-const express = require('express');
-const dbconfig = require('./dbconfig.js');
-const dotEnv = require('dotenv');
-dotEnv.config();
+const express = require('express')
 
-const app = express();
-dbconfig.connectDb();
+const cors = require('cors')
 
-app.get('/',(req,res)=>{
-    res.send('Hello World!');
-})
+const dbconfig = require('./dbconfig.js')
+const dotEnv = require('dotenv')
+dotEnv.config()
+
+const app = express()
+dbconfig.connectDb()
+
+const userRoutes = require('./routes/user.route.js')
+
+app.use(express.json())
+
+app.use(cors({
+    origin:"http://localhost:5173"
+}))
+
+app.use('/api/auth', userRoutes)
 
 app.listen(8001,()=>{
     console.log('Server is running on port 8001');

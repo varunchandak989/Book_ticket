@@ -9,12 +9,12 @@ function Register() {
     try {
      const userData= await register(values)
      if(userData.success){
-        message.success(userData.message)
+      message.success(userData.message)
      }else{
-        message.error(userData.message)
+      message.error(userData.message)
      }
     } catch (error) {
-        console.log(error.message)
+      console.log(error.message)
     }
   }
 

@@ -1,11 +1,12 @@
 const express = require("express");
 const User = require("../models/user.model.js");
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const isAuth = require("../middleware/middleware.js");
 
 const userRouter = express.Router(); // Route
 
 // Sign up Route
-
 userRouter.post("/register", async (req, res) => {
   try {
     // check if the user already exits
@@ -17,13 +18,10 @@ userRouter.post("/register", async (req, res) => {
       });
     }
 
-
     // hash the password
     const salt = await bcrypt.genSalt(10)
     const hashPwd = bcrypt.hashSync(req.body.password , salt)
     req.body.password = hashPwd
-
-
 
     const newUser = await User(req.body);
     await newUser.save();
@@ -37,7 +35,6 @@ userRouter.post("/register", async (req, res) => {
     res.status(500).json({ message: error });
   }
 });
-
 
 // Login Api
 userRouter.post('/login',async(req,res)=>{
@@ -58,9 +55,32 @@ userRouter.post('/login',async(req,res)=>{
       })
     }
     
+    const token = jwt.sign({userId: user._id}, process.env.JSON_WEB_TOKEN, {expiresIn: '10d'});
+    res.cookie('jwtToken' , token , {
+      httpOnly : true,
+    })
+
+    res.send({
+      success: true,
+      message: "You've successfully logged in!",
+      user: user,
+    });
     
   }catch(error){
     res.status(500).json({message: "Error while login in!"})
+  }
+})
+
+userRouter.get('/curren-user',isAuth,async(req,res)=>{
+  const userId = req.userId
+  if(userId == undefined){
+    return res.status(401).json({message: "not authorized, no token"})
+  }
+  try{
+    const verifieduser = await User.findById(userId).select('-password')
+    res.json(verifieduser)
+  }catch(err){
+    return res.status(500).json({message: "server error"})
   }
 })
 

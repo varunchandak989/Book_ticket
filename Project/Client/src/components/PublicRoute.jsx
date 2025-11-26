@@ -4,7 +4,7 @@ import { Navigate } from 'react-router-dom'
 
 function PublicRoute({children}) {
      const {userData} = useSelector(state =>state.user)
-     console.log(userData)
+     console.log(userData);
      if(userData){
         return <Navigate to='/home'/>
      }

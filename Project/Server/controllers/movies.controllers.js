@@ -1,6 +1,6 @@
 const Movie = require('../models/movie.model.js')
 
- const addMovie = async(req , res)=>{
+const addMovie = async(req , res)=>{
    try {
      const newMovie = new Movie(req.body)
      await newMovie.save()
@@ -16,10 +16,9 @@ const Movie = require('../models/movie.model.js')
    }
 }
 
- const updateMovie = async(req , res)=>{
+const updateMovie = async(req , res)=>{
     try {
-     const movieId = req.params.id
-     const movie = await Movie.findByIdAndUpdate(movieId , req.body)
+     const movie = await Movie.findByIdAndUpdate(req.body.movieId , req.body)
        res.send({
             success: true,
             message: 'The movie has been updated!',
@@ -31,7 +30,23 @@ const Movie = require('../models/movie.model.js')
             message: 'Server Error'
         })
     }
+}
 
+const deleteMovie = async(req , res)=>{
+    try {
+     const movieId = req.params.id
+     const movie = await Movie.findByIdAndDelete(movieId , req.body)
+       res.send({
+            success: true,
+            message: 'The movie has been deleted!',
+            data: movie
+        })
+    } catch (error) {
+           res.send({
+            success: false,
+            message: 'Server Error'
+        })
+    }
 }
 
 module.exports={

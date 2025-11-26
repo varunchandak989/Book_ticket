@@ -20,7 +20,7 @@ userRouter.post("/register", async (req, res) => {
 
     // hash the password
     const salt = await bcrypt.genSalt(10)
-    const hashPwd = bcrypt.hashSync(req.body.password , salt)
+    const hashPwd = bcrypt.hashSync(req.body.password, salt)
     req.body.password = hashPwd
 
     const newUser = await User(req.body);
@@ -37,10 +37,10 @@ userRouter.post("/register", async (req, res) => {
 });
 
 // Login Api
-userRouter.post('/login',async(req,res)=>{
-  try{
-    const user = await User.findOne({email: req.body.email})
-    if(!user){
+userRouter.post('/login', async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email })
+    if (!user) {
       res.send({
         success: false,
         message: "User does not exist"
@@ -48,16 +48,16 @@ userRouter.post('/login',async(req,res)=>{
     }
 
     const validpassword = await bcrypt.compare(req.body.password, user.password);
-    if(!validpassword){
+    if (!validpassword) {
       res.send({
         success: false,
         message: "Wrong Password, please try again"
       })
     }
-    
-    const token = jwt.sign({userId: user._id}, process.env.JSON_WEB_TOKEN, {expiresIn: '10d'});
-    res.cookie('jwtToken' , token , {
-      httpOnly : true,
+
+    const token = jwt.sign({ userId: user._id }, process.env.JSON_WEB_TOKEN, { expiresIn: '10d' });
+    res.cookie('jwtToken', token, {
+      httpOnly: true,
     })
 
     res.send({
@@ -65,22 +65,22 @@ userRouter.post('/login',async(req,res)=>{
       message: "You've successfully logged in!",
       user: user,
     });
-    
-  }catch(error){
-    res.status(500).json({message: "Error while login in!"})
+
+  } catch (error) {
+    res.status(500).json({ message: "Error while login in!" })
   }
 })
 
-userRouter.get('/curren-user',isAuth,async(req,res)=>{
+userRouter.get('/curren-user', isAuth, async (req, res) => {
   const userId = req.userId
-  if(userId == undefined){
-    return res.status(401).json({message: "not authorized, no token"})
+  if (userId == undefined) {
+    return res.status(401).json({ message: "not authorized, no token" })
   }
-  try{
+  try {
     const verifieduser = await User.findById(userId).select('-password')
     res.json(verifieduser)
-  }catch(err){
-    return res.status(500).json({message: "server error"})
+  } catch (err) {
+    return res.status(500).json({ message: "server error" })
   }
 })
 

@@ -144,7 +144,7 @@ export default function SingleMovie() {
                         .map((singleShow) => {
                           return (
                             <li
-                              // key={singleShow._id}
+                              key={singleShow._id}
                               onClick={() =>
                                 navigate(`/bookshow/${singleShow._id}`)
                               }

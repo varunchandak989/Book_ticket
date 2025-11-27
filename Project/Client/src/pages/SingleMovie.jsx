@@ -164,7 +164,6 @@ export default function SingleMovie() {
           })}
         </div>
       )}
-
     </div>
   );
 }

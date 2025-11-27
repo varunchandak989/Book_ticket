@@ -60,6 +60,7 @@ showRouter.post("/get-all-theatres-by-movie", async (req, res) => {
         const shows = await Show.find({ movie, date }).populate('theatre')
 
         // we need to map the shows with theatres
+        // Filter out shows by uniue theatres
         let uniqueTheatres = [];
 
         shows.forEach((show) => {

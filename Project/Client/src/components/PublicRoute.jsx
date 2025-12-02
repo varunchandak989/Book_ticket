@@ -6,7 +6,13 @@ function PublicRoute({children}) {
      const {userData} = useSelector(state =>state.user)
      console.log(userData);
      if(userData){
-        return <Navigate to='/home'/>
+        if(userData.role === 'admin') {
+          return <Navigate to='/admin'/>
+        } else if(userData.role === 'partner') {
+          return <Navigate to='/partner'/>
+        } else {
+          return <Navigate to='/home'/>
+        }
      }
      return children
 }

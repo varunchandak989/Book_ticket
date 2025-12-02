@@ -31,7 +31,7 @@ const ShowModal = ({ isShowModalOpen, setIsShowModalOpen , selectedTheatre }) =>
             message.error(movieResponse.error);
         }
 
-       const allShowsResponse =  await getShows({thearteId : selectedTheatre._id})
+      const allShowsResponse =  await getShows({theatreId : selectedTheatre._id})
      
        if(allShowsResponse.success){
         console.log(allShowsResponse.data)

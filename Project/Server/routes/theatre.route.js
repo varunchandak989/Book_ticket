@@ -1,11 +1,17 @@
 const express = require('express')
 const Theatre = require('../models/theatre.model.js');
+const isAuth = require('../middleware/authmiddleware.js');
+const { requirePartnerOrAdmin } = require('../middleware/rolemiddleware.js');
 
 const theatreRouter = express.Router();
 
-theatreRouter.post('/add-theatre', async (req, res) => {
-    try {
+theatreRouter.post('/add-theatre', isAuth, requirePartnerOrAdmin, async (req, res) => {
+    try{
         console.log("Received theatre data:", req.body);
+        // Security: Partners can only add theatres with themselves as owner
+        if (req.user.role === 'partner') {
+            req.body.owner = req.userId;
+        }
         const newTheatre = new Theatre(req.body);
         const savedTheatre = await newTheatre.save();
         console.log("Saved theatre:", savedTheatre);
@@ -14,7 +20,7 @@ theatreRouter.post('/add-theatre', async (req, res) => {
             message: "New theatre has been added!",
             data: savedTheatre
         })
-    } catch (err) {
+    }catch(err){
         console.error("Error adding theatre:", err);
         res.send({
             success: false,
@@ -24,7 +30,7 @@ theatreRouter.post('/add-theatre', async (req, res) => {
 });
 
 // Get all theatres for Admin route
-theatreRouter.get('/get-all-theatres', async (req, res) => {
+theatreRouter.get('/get-all-theatres',isAuth, requirePartnerOrAdmin, async (req, res) => {
     try {
         const allTheatres = await Theatre.find();
         res.send({
@@ -41,7 +47,7 @@ theatreRouter.get('/get-all-theatres', async (req, res) => {
 });
 
 // Get the theatres of a specific owner
-theatreRouter.post('/get-all-theatres-by-owner', async (req, res) => {
+theatreRouter.post('/get-all-theatres-by-owner',isAuth, async (req, res) => {
     try {
         console.log("Getting theatres for owner:", req.body.owner);
         const allTheatres = await Theatre.find({ owner: req.body.owner });
@@ -62,15 +68,31 @@ theatreRouter.post('/get-all-theatres-by-owner', async (req, res) => {
 
 
 // Update theatre
-theatreRouter.put('/update-theatre', async (req, res) => {
-    try {
+theatreRouter.put('/update-theatre', isAuth, requirePartnerOrAdmin, async (req, res) => {
+    try{
+        const theatre = await Theatre.findById(req.body.theatreId);
+        if (!theatre) {
+            return res.send({
+                success: false,
+                message: "Theatre not found"
+            });
+        }
+        
+        // Security: Partners can only update their own theatres
+        if (req.user.role === 'partner' && theatre.owner.toString() !== req.userId) {
+            return res.send({
+                success: false,
+                message: "Access denied. You can only update your own theatres."
+            });
+        }
+        
         await Theatre.findByIdAndUpdate(req.body.theatreId, req.body);
         // console.log(req.body.theatreId)
         res.send({
             success: true,
             message: "Theatre has been updated!"
         })
-    } catch (err) {
+    }catch(err){
         res.send({
             success: false,
             message: err.message
@@ -79,14 +101,30 @@ theatreRouter.put('/update-theatre', async (req, res) => {
 })
 
 // Delete theatre
-theatreRouter.put('/delete-theatre', async (req, res) => {
-    try {
+theatreRouter.put('/delete-theatre', isAuth, requirePartnerOrAdmin, async (req, res) => {
+    try{
+        const theatre = await Theatre.findById(req.body.theatreId);
+        if (!theatre) {
+            return res.send({
+                success: false,
+                message: "Theatre not found"
+            });
+        }
+        
+        // Security: Partners can only delete their own theatres
+        if (req.user.role === 'partner' && theatre.owner.toString() !== req.userId) {
+            return res.send({
+                success: false,
+                message: "Access denied. You can only delete your own theatres."
+            });
+        }
+        
         await Theatre.findByIdAndDelete(req.body.theatreId);
         res.send({
             success: true,
             message: "The theatre has been deleted!"
         })
-    } catch (err) {
+    }catch(err){
         res.send({
             success: false,
             message: err.message

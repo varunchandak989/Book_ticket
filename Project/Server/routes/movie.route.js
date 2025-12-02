@@ -1,13 +1,15 @@
 const express = require('express')
 const Movie = require('../models/movie.model.js');
 const { addMovie, updateMovie } = require('../controllers/movies.controllers.js');
+const isAuth = require('../middleware/authmiddleware.js');
+const { requireAdmin } = require('../middleware/rolemiddleware.js');
 const movieRouter = express.Router(); // Route
 
 // Add a Movie
-movieRouter.post('/add-movie', addMovie)
+movieRouter.post('/add-movie',isAuth, requireAdmin, addMovie)
 
 // update movie
-movieRouter.put('/update-movie/', updateMovie)
+movieRouter.put('/update-movie/',isAuth, requireAdmin, updateMovie)
 
 // Delete Movie
 movieRouter.delete('/delete-movie/:id', async (req, res) => {
@@ -58,7 +60,7 @@ movieRouter.get('/:id', async (req, res) => {
     } catch (error) {
         res.send({
             success: false,
-            message: err.message
+            message: error.message
         })
     }
 })

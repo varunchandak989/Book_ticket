@@ -2,7 +2,7 @@ const express = require("express");
 const User = require("../models/user.model.js");
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const isAuth = require("../middleware/middleware.js");
+const isAuth = require("../middleware/authmiddleware.js");
 
 const userRouter = express.Router(); // Route
 
@@ -12,10 +12,15 @@ userRouter.post("/register", async (req, res) => {
     // check if the user already exits
     const userExists = await User.findOne({ email: req.body.email });
     if (userExists) {
-      res.send({
+      return res.send({
         success: false,
         message: "User Already Exists with the Email",
       });
+    }
+
+    const allowedRoles = ["user", "partner"];
+    if (!req.body.role || !allowedRoles.includes(req.body.role)) {
+      req.body.role = "user";
     }
 
     // hash the password
@@ -32,7 +37,7 @@ userRouter.post("/register", async (req, res) => {
       user: newUser,
     });
   } catch (error) {
-    res.status(500).json({ message: error });
+    res.status(500).json({ success: false, message: error.message || "Registration failed" });
   }
 });
 
@@ -58,30 +63,71 @@ userRouter.post('/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JSON_WEB_TOKEN, { expiresIn: '10d' });
     res.cookie('jwtToken', token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
     })
 
     res.send({
       success: true,
       message: "You've successfully logged in!",
-      user: user,
+      user: { 
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }
     });
 
   } catch (error) {
-    res.status(500).json({ message: "Error while login in!" })
+    res.status(500).json({
+      success:false,
+      message: "Server Error!" 
+    })
   }
 })
 
 userRouter.get('/curren-user', isAuth, async (req, res) => {
-  const userId = req.userId
-  if (userId == undefined) {
-    return res.status(401).json({ message: "not authorized, no token" })
-  }
   try {
-    const verifieduser = await User.findById(userId).select('-password')
-    res.json(verifieduser)
-  } catch (err) {
-    return res.status(500).json({ message: "server error" })
-  }
+    const verifiedUser = await User.findById(req.userId).select("-password");
+    if (!verifiedUser) {
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found" 
+      });
+    }
+    // Return consistent user data structure
+    res.json({
+      _id: verifiedUser._id,
+      name: verifiedUser.name,
+      email: verifiedUser.email,
+      role: verifiedUser.role,
+    });
+  } catch (error) {
+    return res.status(500).json({ 
+      success: false,
+      message: "Server error" 
+    });
+  } 
 })
+
+//logout route
+userRouter.post("/logout", isAuth, async (req, res) => {
+  try {
+    res.clearCookie('jwtToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
+    res.send({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Error logging out" 
+    });
+  }
+});
 
 module.exports = userRouter
